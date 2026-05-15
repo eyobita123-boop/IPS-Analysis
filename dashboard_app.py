@@ -86,7 +86,7 @@ elif view_mode == "Date Range":
     title_suffix = f" – {start_date} to {end_date}"
     # Store filtered non-aggregated data for the Trends page (daily within range)
     daily_data_for_trends = df_range
-
+    
 df_view["Market Share (%)"] = (df_view["Total Value"] / df_view["Total Value"].sum()) * 100
 top10 = df_view.nlargest(10, "Total Value")
 
@@ -225,9 +225,13 @@ elif page == "All-in-One View":
 elif page == "Trends":
     st.header("📈 Daily Trends (All Banks)")
     if view_mode == "All Days Summary":
-        st.info("Switch to 'Single Date' view to see daily trends.")
-    else:
-        daily_totals = df_all.groupby("Date").agg(
+        st.info("Switch to 'Single Date' or 'Date Range' view to see daily trends.")
+    elif view_mode == "Single Date":
+        daily_data = df_all[df_all["Date"] == selected_date]
+        daily_totals = daily_data.groupby("Date").agg(...)
+    else: 
+        daily_data = daily_data_for_trends
+        daily_totals = daily_data.groupby("Date").agg(
             Total_Value=("Total Value", "sum"),
             In_Txns=("Inbound Txns", "sum"),
             Out_Txns=("Outbound Txns", "sum")
