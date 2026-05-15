@@ -45,14 +45,14 @@ default_date = dates_list[-1]
 st.sidebar.header("⚙️ Settings")
 view_mode = st.sidebar.radio(
     "Select View",
-    ["Single Date", "All Days Summary"]
+    ["Single Date", "All Days Summary", "Date Range"]
 )
 
 if view_mode == "Single Date":
     selected_date = st.sidebar.selectbox("Pick a date", dates_list, index=len(dates_list)-1)
     df_view = df_all[df_all["Date"] == selected_date].copy()
     title_suffix = f" – {selected_date}"
-else:
+elif view_mode == "All Days Summary":
     # Aggregate all days
     df_view = df_all.groupby("Bank", as_index=False).agg({
         "Inbound Value": "sum",
@@ -63,6 +63,29 @@ else:
         "Net Flow": "sum",
     })
     title_suffix = " – All Days Combined"
+elif view_mode == "Date Range":
+    min_date = min(dates_list)
+    max_date = max(dates_list)
+    start_date, end_date = st.sidebar.date_input(
+        "Select date range",
+        value=(min_date, max_date),
+        min_value=min_date,
+        max_value=max_date
+    )
+    mask = (df_all["Date"] >= start_date) & (df_all["Date"] <= end_date)
+    df_range = df_all[mask]
+    # Aggregate across the selected range
+    df_view = df_range.groupby("Bank", as_index=False).agg({
+        "Inbound Value": "sum",
+        "Outbound Value": "sum",
+        "Inbound Txns": "sum",
+        "Outbound Txns": "sum",
+        "Total Value": "sum",
+        "Net Flow": "sum",
+    })
+    title_suffix = f" – {start_date} to {end_date}"
+    # Store filtered non-aggregated data for the Trends page (daily within range)
+    daily_data_for_trends = df_range
 
 df_view["Market Share (%)"] = (df_view["Total Value"] / df_view["Total Value"].sum()) * 100
 top10 = df_view.nlargest(10, "Total Value")
