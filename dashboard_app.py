@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 
 # ========== PAGE CONFIG ==========
-st.set_page_config(page_title="EthSwitch IPS/QR Dashboard", layout="wide")
+st.set_page_config(page_title="EthSwitch Dashboard", layout="wide")
 
 # ========== DATA LOADING (ROBUST – AUTO DETECTS COLUMNS) ==========
 @st.cache_data
@@ -26,48 +26,39 @@ def load_all_data(folder="data"):
 
     records = []
     for file in all_files:
-        # Extract date from filename (e.g., 2026-05-09.xlsx)
         date_str = file.stem
         try:
             date = pd.to_datetime(date_str).date()
         except:
-            continue   # skip files that can't be parsed as a date
+            continue
 
-        # Read the entire sheet without assuming a fixed layout
         df_raw = pd.read_excel(file, header=None)
 
-        # Find the row that contains the word "BANK" (header row)
+        # Find header row containing "BANK"
         header_row_idx = None
         for i, row in df_raw.iterrows():
             if any(str(val).strip().upper() == "BANK" for val in row if pd.notna(val)):
                 header_row_idx = i
                 break
         if header_row_idx is None:
-            # Fallback: assume data starts at row 7 (0‑based index 6)
-            header_row_idx = 6
+            header_row_idx = 6  # fallback
 
-        # Use that row as column headers (convert to uppercase for matching)
         raw_headers = df_raw.iloc[header_row_idx].fillna("").astype(str).str.strip().str.upper()
-
-        # Extract data rows (everything after the header)
         df_day = df_raw.iloc[header_row_idx + 1 :].copy()
         df_day.columns = raw_headers
 
-        # Helper to find a column containing ALL given keywords
         def find_col(keywords):
             for col in df_day.columns:
                 if all(k in col for k in keywords):
                     return col
             return None
 
-        # Try to identify columns by expected keywords
         bank_col = find_col(["BANK"])
         in_txn_col = find_col(["DESTINATION", "TRANSACTION"]) or find_col(["NO", "TRANSACTIONS"])
         in_val_col = find_col(["DESTINATION", "VALUES"])
         out_txn_col = find_col(["SOURCE", "TRANSACTION"])
         out_val_col = find_col(["SOURCE", "VALUES"])
 
-        # If any column not found, fall back to the original fixed positions (indices 1‑5)
         if not all([bank_col, in_txn_col, in_val_col, out_txn_col, out_val_col]):
             df_day = df_raw.iloc[header_row_idx + 1 :, [1, 2, 3, 4, 5]]
             df_day.columns = ["Bank", "Inbound Txns", "Inbound Value", "Outbound Txns", "Outbound Value"]
@@ -75,14 +66,10 @@ def load_all_data(folder="data"):
             df_day = df_day[[bank_col, in_txn_col, in_val_col, out_txn_col, out_val_col]]
             df_day.columns = ["Bank", "Inbound Txns", "Inbound Value", "Outbound Txns", "Outbound Value"]
 
-        # Clean the data
         df_day = df_day.dropna(subset=["Bank"])
-        # Ensure Bank column is string
         if not pd.api.types.is_string_dtype(df_day["Bank"]):
             df_day["Bank"] = df_day["Bank"].astype(str)
-        # Remove the TOTAL row
         df_day = df_day[~df_day["Bank"].str.strip().str.upper().str.contains("TOTAL")]
-
         df_day["Date"] = date
         records.append(df_day)
 
@@ -90,33 +77,39 @@ def load_all_data(folder="data"):
         return None
 
     df = pd.concat(records, ignore_index=True)
-    # Convert numeric columns
     for col in ["Inbound Value", "Outbound Value", "Inbound Txns", "Outbound Txns"]:
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
     df["Total Value"] = df["Inbound Value"] + df["Outbound Value"]
     df["Net Flow"] = df["Inbound Value"] - df["Outbound Value"]
     return df
 
-# Load IPS data (mandatory)
-df_ips = load_all_data("data")
-if df_ips is None or df_ips.empty:
-    st.error("No valid IPS data files found in 'data/' folder. Please add Excel files.")
-    st.stop()
 
-# Load QR data (optional)
-df_qr = load_all_data("data_qr")
+# ========== DISCOVER ALL DATA SOURCES ==========
+# Find every folder matching "data*" (e.g., data, data_qr, data_momo)
+project_dir = Path.cwd()  # or specify your project path explicitly
+data_folders = sorted([d.name for d in project_dir.iterdir()
+                       if d.is_dir() and d.name.startswith("data")])
+
+# Load each folder into a dictionary { folder_name : DataFrame }
+all_data_sources = {}
+for folder in data_folders:
+    df = load_all_data(folder)
+    if df is not None and not df.empty:
+        all_data_sources[folder] = df
+
+# If no data found, stop
+if not all_data_sources:
+    st.error("No valid data folders found. Please add a folder starting with 'data' (e.g., 'data', 'data_qr').")
+    st.stop()
 
 # ========== SIDEBAR CONTROLS ==========
 st.sidebar.title("💳 EthSwitch Dashboard")
 
-# Data source selector (IPS / QR) – appears only if QR folder exists with files
-data_sources = ["IPS"]
-if df_qr is not None and not df_qr.empty:
-    data_sources.append("QR")
-data_source = st.sidebar.radio("📂 Data Source", data_sources, horizontal=True)
+# Data source selector – dynamically built from discovered folders
+data_source = st.sidebar.radio("📂 Data Source", list(all_data_sources.keys()), horizontal=True)
 
 # Active dataframe
-df_active = df_ips if data_source == "IPS" else df_qr
+df_active = all_data_sources[data_source]
 dates_list = sorted(df_active["Date"].unique())
 
 # View mode
@@ -173,7 +166,6 @@ elif view_mode == "Date Range":
 df_view["Market Share (%)"] = (df_view["Total Value"] / df_view["Total Value"].sum()) * 100
 top10 = df_view.nlargest(10, "Total Value")
 
-# Force Dashen into top 10 if requested and not already present
 if force_dashen and "Dashen" not in top10["Bank"].values:
     dashen_row = df_view[df_view["Bank"] == "Dashen"]
     if not dashen_row.empty:
@@ -320,7 +312,7 @@ elif page == "Trends":
     else:
         if view_mode == "Single Date":
             daily_data = df_active[df_active["Date"] == selected_date]
-        else:  # Date Range
+        else:
             daily_data = daily_data_for_trends
 
         daily_totals = daily_data.groupby("Date").agg(
@@ -330,13 +322,11 @@ elif page == "Trends":
         ).reset_index()
         daily_totals["Total_Txns"] = daily_totals["In_Txns"] + daily_totals["Out_Txns"]
 
-        # System total value over time
         fig1 = px.line(daily_totals, x="Date", y="Total_Value",
                        title="Daily Total Value (ETB)", markers=True)
         fig1.update_layout(template='plotly_white')
         st.plotly_chart(fig1, width='stretch')
 
-        # Top 5 banks (by total in the period)
         top5_banks = daily_data.groupby("Bank")["Total Value"].sum().nlargest(5).index
         top5_trend = daily_data[daily_data["Bank"].isin(top5_banks)].groupby(
             ["Date", "Bank"])["Total Value"].sum().reset_index()
@@ -345,7 +335,6 @@ elif page == "Trends":
         fig2.update_layout(template='plotly_white')
         st.plotly_chart(fig2, width='stretch')
 
-        # Transaction counts
         fig4 = go.Figure()
         fig4.add_trace(go.Scatter(x=daily_totals["Date"], y=daily_totals["In_Txns"],
                                   name="Inbound Txns", mode="lines+markers"))
