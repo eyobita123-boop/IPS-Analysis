@@ -181,7 +181,7 @@ page = st.sidebar.radio(
     ["Overview", "Market Share", "Value Flows", "Transaction Volumes",
      "Net Flows", "All-in-One View", "Trends"]
 )
-st.title("IPS and QR Transaction Analysis"), m
+st.title("IPS and QR Transaction Analysis")
 st.markdown("---")
 st.title(f"{data_source} Dashboard{title_suffix}")
 
