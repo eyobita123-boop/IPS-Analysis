@@ -181,7 +181,7 @@ page = st.sidebar.radio(
     ["Overview", "Market Share", "Value Flows", "Transaction Volumes",
      "Net Flows", "All-in-One View", "Trends"]
 )
-st.title("IPS and QR Transaction Analysis")
+st.title("IPS and QR Transaction Analysis"), m
 st.markdown("---")
 st.title(f"{data_source} Dashboard{title_suffix}")
 
@@ -349,8 +349,8 @@ elif page == "Trends":
 
 # ========== FOOTER ==========
 st.sidebar.markdown("---")
-st.sidebar.caption(f"Data: EthSwitch {data_source}, {len(dates_list)} days")
+st.sidebar.caption(f"Data: {data_source}, {len(dates_list)} Days")
 st.sidebar.markdown("---")
 
 
-st.sidebar.caption("Dashboard by Eyob D. – [LinkedIn](www.linkedin.com/in/eyobderejebekele-bb8a02379)")
+st.sidebar.caption("Dashboard by Eyob D. – [LinkedIn](https://www.linkedin.com/in/eyobderejebekele-bb8a02379)")
