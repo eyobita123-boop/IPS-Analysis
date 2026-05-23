@@ -346,3 +346,7 @@ elif page == "Trends":
 # ========== FOOTER ==========
 st.sidebar.markdown("---")
 st.sidebar.caption(f"Data: EthSwitch {data_source}, {len(dates_list)} days")
+st.sidebar.markdown("---")
+
+
+st.sidebar.caption("Dashboard by Eyob D. – [LinkedIn](www.linkedin.com/in/eyobderejebekele-bb8a02379)")
