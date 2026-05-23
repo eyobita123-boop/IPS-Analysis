@@ -181,8 +181,9 @@ page = st.sidebar.radio(
     ["Overview", "Market Share", "Value Flows", "Transaction Volumes",
      "Net Flows", "All-in-One View", "Trends"]
 )
-
-st.title(f"💳 IPS and QR Analysis {data_source} Dashboard{title_suffix}")
+st.title("IPS and QR Transaction Analysis")
+st.markdown("---")
+st.title(f"{data_source} Dashboard{title_suffix}")
 
 # ========== HELPER ==========
 def styled_bar(x, y, title, xlabel, color=None, text_format=None):
