@@ -85,10 +85,13 @@ def load_all_data(folder="data, Data, Data_QR, Data_IPS, QR, IPS"):
 
 
 # ========== DISCOVER ALL DATA SOURCES ==========
-# Find every folder matching "data*" (e.g., data, data_qr, data_momo)
+# Find every folder matching "data*", "qr*", or "ips*" "Data" (e.g., data, data_qr, qr, ips)
 project_dir = Path.cwd()  # or specify your project path explicitly
-data_folders = sorted([d.name for d in project_dir.iterdir()
-                       if d.is_dir() and d.name.startswith("data, Data, Data_QR, Data_IPS, QR, IPS")])
+valid_prefixes = ("data", "qr", "ips", "Data", "QR", "IPS", "Data_QR", "Data_IPS", "data_qr", "data_ips")
+data_folders = sorted(
+    [d.name for d in project_dir.iterdir()
+     if d.is_dir() and d.name.upper().startswith(valid_prefixes) and d.name.lower() .startswith(valid_prefixes)]
+)
 
 # Load each folder into a dictionary { folder_name : DataFrame }
 all_data_sources = {}
