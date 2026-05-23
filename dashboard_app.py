@@ -10,7 +10,7 @@ st.set_page_config(page_title="EthSwitch Dashboard", layout="wide")
 
 # ========== DATA LOADING (ROBUST – AUTO DETECTS COLUMNS) ==========
 @st.cache_data
-def load_all_data(folder="data"):
+def load_all_data(folder="data, Data, Data_QR, Data_IPS, QR, IPS"):
     """
     Reads all .xlsx files from a folder.
     Automatically finds the header row (containing 'BANK') and maps columns by name.
@@ -88,7 +88,7 @@ def load_all_data(folder="data"):
 # Find every folder matching "data*" (e.g., data, data_qr, data_momo)
 project_dir = Path.cwd()  # or specify your project path explicitly
 data_folders = sorted([d.name for d in project_dir.iterdir()
-                       if d.is_dir() and d.name.startswith("data")])
+                       if d.is_dir() and d.name.startswith("data, Data, Data_QR, Data_IPS, QR, IPS")])
 
 # Load each folder into a dictionary { folder_name : DataFrame }
 all_data_sources = {}
@@ -103,7 +103,7 @@ if not all_data_sources:
     st.stop()
 
 # ========== SIDEBAR CONTROLS ==========
-st.sidebar.title("💳 EthSwitch Dashboard")
+st.sidebar.title("💳 IPS and QR Analysis")
 
 # Data source selector – dynamically built from discovered folders
 data_source = st.sidebar.radio("📂 Data Source", list(all_data_sources.keys()), horizontal=True)
@@ -179,7 +179,7 @@ page = st.sidebar.radio(
      "Net Flows", "All-in-One View", "Trends"]
 )
 
-st.title(f"💳 EthSwitch {data_source} Dashboard{title_suffix}")
+st.title(f"💳 IPS and QR Analysis {data_source} Dashboard{title_suffix}")
 
 # ========== HELPER ==========
 def styled_bar(x, y, title, xlabel, color=None, text_format=None):
