@@ -353,4 +353,4 @@ st.sidebar.caption(f"Data: {data_source}, {len(dates_list)} Days")
 st.sidebar.markdown("---")
 
 
-st.sidebar.caption("Dashboard by Eyob D. – [LinkedIn](https://www.linkedin.com/in/eyobderejebekele-bb8a02379)")
+st.sidebar.caption("Dashboard by Eyob Dereje. – [LinkedIn](https://www.linkedin.com/in/eyobderejebekele-bb8a02379)")
