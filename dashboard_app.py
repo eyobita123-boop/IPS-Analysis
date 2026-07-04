@@ -58,7 +58,7 @@ def load_all_data(folder_path):
                     return col
             return None
 
-        bank_col = find_col(["BANK"])
+        bank_col = find_col(["BANK", "Bank","Institution", "INSTITUTION"])
         in_txn_col = find_col(["DESTINATION", "TRANSACTION"]) or find_col(["NO", "TRANSACTIONS"])
         in_val_col = find_col(["DESTINATION", "VALUES"])
         out_txn_col = find_col(["SOURCE", "TRANSACTION"])
