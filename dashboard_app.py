@@ -237,7 +237,7 @@ def forecast_trend(df_trend, days=7):
     future_dates = [daily.index[-1] + timedelta(days=i+1) for i in range(days)]
     return pd.DataFrame({
         "Date": future_dates,
-        "Forecast": forecast[1:]
+        "Value": forecast[1:]
     })
 
 
@@ -784,8 +784,12 @@ elif page == "Forecasting":
         daily_actual.columns = ["Date", "Value", "Type"]
         
         forecast_plot = forecast_df.copy()
+        if "Forecast" in forecast_plot.columns:
+            forecast_plot = forecast_plot.rename(columns={"Forecast": "Value"})
+        elif "Value" not in forecast_plot.columns:
+            forecast_plot["Value"] = np.nan
         forecast_plot["Type"] = "Forecast"
-        forecast_plot.columns = ["Date", "Value", "Type"]
+        forecast_plot = forecast_plot[["Date", "Value", "Type"]]
         
         combined = pd.concat([daily_actual.tail(14), forecast_plot], ignore_index=True)
         
@@ -796,6 +800,10 @@ elif page == "Forecasting":
         st.markdown("---")
         st.subheader("Forecast Details")
         forecast_display = forecast_df.copy()
+        if "Forecast" in forecast_display.columns:
+            forecast_display = forecast_display.rename(columns={"Forecast": "Value"})
+        elif "Value" not in forecast_display.columns:
+            forecast_display["Value"] = np.nan
         forecast_display["Value"] = forecast_display["Value"].apply(lambda x: f"{format_etb(x, scale=1e6)} M")
         st.dataframe(forecast_display)
     else:
